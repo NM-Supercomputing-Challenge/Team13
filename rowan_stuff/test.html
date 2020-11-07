@@ -1,23 +1,2 @@
-<script>
-
-
-    function simple_func(p1, p2){
-        return p1 * p2;
-    }
-
-
-    var t_0 = performance.now();
-
-    num = simple_func(9, 10);
-    console.log(num);
-
-    var t_1 = performance.now();
-    dt = t_1 - t_0;
-    console.log(dt);  
-
-    console.time(simple_func(9, 10));
-    num = simple_func(9, 10);
-    console.timeEnd(simple_func(9, 10));
-    
-</script>
+<script defer src="./test.js"></script>
 

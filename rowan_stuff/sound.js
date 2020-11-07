@@ -1,9 +1,7 @@
-audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-frequency = 3000;
-type = 'sine';
-volume = 0.05;
-duration = 50;
+
+frequency = 5000;
+duration = 200;
 var i;
 
 function sleep(ms) {
@@ -11,15 +9,16 @@ function sleep(ms) {
 }
 
 function beep_once() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     var oscillator = audioCtx.createOscillator();
     var gainNode = audioCtx.createGain();
 
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
 
-    gainNode.gain.value = volume;
+    gainNode.gain.value = 0.05;
     oscillator.frequency.value = frequency;
-    oscillator.type = type;
+    oscillator.type = 'sine';
 
     oscillator.start();
   
@@ -38,14 +37,14 @@ async function beep() {
 
 
 for (i=0; i<5; i++){
-  await sleep(100);
+  var t_0 = performance.now();
+  await sleep(300);
+  var t_1 = performance.now();
+
+  console.log(t_1 - t_0);  
   beep_once();
   console.log(i);  
 }
 
-
-  var t_1 = performance.now();
-
-  console.log(t_1 - t_0);  
 }
 
