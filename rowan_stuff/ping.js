@@ -5,10 +5,12 @@ var isPlaying = false;
 var sourceNode = null;
 var analyser = null;
 var theBuffer = null;
-var DEBUGCANVAS = null;
 var mediaStreamSource = null;
 var pitch;
+var	target;
 var listening = false;
+var pReturn;
+
 
 window.onload = function() {
 	audioContext = new AudioContext();
@@ -39,6 +41,7 @@ function gotStream(stream) {
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 4096;
 	mediaStreamSource.connect( analyser );
+	t1 = performance.now();   //start timer
 	updateFrequency();
 }
 
@@ -78,6 +81,7 @@ function reset() {
 
 function start_mic() {
 	reset();
+	console.log("listening...");
     getUserMedia(
     	{
             "audio": {
@@ -155,61 +159,48 @@ function autoCorrelate( buf, sampleRate ) {
 //	var best_frequency = sampleRate/best_offset;
 }
 
-/*function beep(freq) {
+function beep(freq) {
 	oscillator = audioContext.createOscillator();
 	gainNode = audioContext.createGain();
 	oscillator.connect(gainNode);
 	
     gainNode.connect(audioContext.destination);
-	gainNode.gain.value = 0.1;
+	gainNode.gain.value = 0.3;
     oscillator.frequency.value = freq;
     oscillator.type = 'sine';
 
-    oscillator.start(1);
-    oscillator.stop(1.50);
+    oscillator.start(0);
+    setTimeout(
+      function(){
+        oscillator.stop();
+      }, 
+      200
+	);  
 }
-*/
 
-/*function listen() {
+
+function listen() {
+	pReturn = false;
+	target = 2000;
+	listening = true;
 	start_mic();
-	//listening = true;
-	updateFrequency();
 }
-*/
 
 
-/*function ping_send() {
 
-	start_mic();   //turn on mic
-	listening = true;
-
+function ping_send() {
+	pReturn = false;
+	target = 2000;
 	beep(3000);  //send ping
-	t1 = performance.now();   //start timer
-	updateFrequency(3000);  //start listening
-	t2 = perfomance.now();   //stop timer 
-
-	reset();
-	
-	distance = 0.343 * (t2-t1); 
-	console.log(distance + " meters");   //print results
-
+	start_mic();   //turn on mic
 }
-*/
 
-/*function ping_return() {
-	toggleLiveInput();   //turn on mic
-	listening = true;
-	while (listening){
-		console.log(pitch);
-		if (pitch > 3000 && pitch < 3500){ 
-			reset();
-			beep(4000);
-			listening = false;
-			console.log("ping returned!");
-			break;
-		}
-	}
-}*/
+
+function ping_return() {
+	pReturn = true;
+	target = 2000;
+	start_mic();   //turn on mic
+}
 
 
 function updateFrequency(time) {
@@ -226,13 +217,24 @@ function updateFrequency(time) {
 
 	console.log(frequency);
 
-/*	if (frequency > 3000 && frequency < 3500){
-		listening = false;
-		break;
+	if (frequency > target && frequency < (target + 500) && pReturn == false){
+		t2 = performance.now();   //stop timer 
+		distance = 0.343 * (t2-t1); 
+		console.log(distance + " meters");   //print results
+		reset();
 	}
-	*/
+
+	if (frequency > target && frequency < (target + 500) && pReturn == true){
+		beep(3000);
+		console.log("returned!");
+		t2 = performance.now();   //stop timer 
+		reset();
+		
+	}
 
 
+	
 	rafID = window.requestAnimationFrame(updateFrequency);
+	
 	
 }
