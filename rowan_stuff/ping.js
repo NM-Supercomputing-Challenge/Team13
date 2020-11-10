@@ -7,50 +7,12 @@ var analyser = null;
 var theBuffer = null;
 var DEBUGCANVAS = null;
 var mediaStreamSource = null;
-var detectorElem, 
-	canvasElem,
-	waveCanvas,
-	pitchElem;
+var pitch;
+var listening = false;
 
 window.onload = function() {
 	audioContext = new AudioContext();
-	MAX_SIZE = Math.max(4,Math.floor(audioContext.sampleRate/5000));	// corresponds to a 5kHz signal
-
-	detectorElem = document.getElementById( "detector" );
-	canvasElem = document.getElementById( "output" );
-	DEBUGCANVAS = document.getElementById( "waveform" );
-	if (DEBUGCANVAS) {
-		waveCanvas = DEBUGCANVAS.getContext("2d");
-		waveCanvas.strokeStyle = "black";
-		waveCanvas.lineWidth = 1;
-	}
-	pitchElem = document.getElementById( "pitch" );
-
-	detectorElem.ondragenter = function () { 
-		this.classList.add("droptarget"); 
-		return false; };
-	detectorElem.ondragleave = function () { this.classList.remove("droptarget"); return false; };
-	detectorElem.ondrop = function (e) {
-  		this.classList.remove("droptarget");
-  		e.preventDefault();
-		theBuffer = null;
-
-	  	var reader = new FileReader();
-	  	reader.onload = function (event) {
-	  		audioContext.decodeAudioData( event.target.result, function(buffer) {
-	    		theBuffer = buffer;
-	  		}, function(){alert("error loading!");} ); 
-
-	  	};
-	  	reader.onerror = function (event) {
-	  		alert("Error: " + reader.error );
-		};
-	  	reader.readAsArrayBuffer(e.dataTransfer.files[0]);
-	  	return false;
-	};
-
-
-
+	MAX_SIZE = Math.max(4,Math.floor(audioContext.sampleRate/44100));
 }
 
 function error() {
@@ -75,42 +37,47 @@ function gotStream(stream) {
 
     // Connect it to the destination.
     analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
-    mediaStreamSource.connect( analyser );
-    updatePitch();
+    analyser.fftSize = 4096;
+	mediaStreamSource.connect( analyser );
+	updateFrequency();
 }
 
-function toggleOscillator() {
-    if (isPlaying) {
+
+function reset() {
+
+	if (isPlaying) {
         //stop playing and return
         sourceNode.stop( 0 );
         sourceNode = null;
         analyser = null;
-        isPlaying = false;
-        return "play oscillator";
-    }
+		isPlaying = false;
+		
+	}
+	
     sourceNode = audioContext.createOscillator();
-
     analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
+	analyser.fftSize = 4096;
+	sourceNode.frequency.value = 0;
     sourceNode.connect( analyser );
     analyser.connect( audioContext.destination );
-    sourceNode.start(0);
-    isPlaying = true;
-    isLiveInput = false;
-    updatePitch();
-
-    return "stop";
-}
-
-function toggleLiveInput() {
-    if (isPlaying) {
+	sourceNode.start(0);
+	isPlaying = true;
+	
+	if (isPlaying) {
         //stop playing and return
         sourceNode.stop( 0 );
         sourceNode = null;
         analyser = null;
-        isPlaying = false;
-    }
+		isPlaying = false;
+		
+	}
+	
+	console.log("reset");
+	
+}
+
+function start_mic() {
+	reset();
     getUserMedia(
     	{
             "audio": {
@@ -188,47 +155,84 @@ function autoCorrelate( buf, sampleRate ) {
 //	var best_frequency = sampleRate/best_offset;
 }
 
-function beep() {
+/*function beep(freq) {
 	oscillator = audioContext.createOscillator();
 	gainNode = audioContext.createGain();
 	oscillator.connect(gainNode);
 	
     gainNode.connect(audioContext.destination);
-	gainNode.gain.value = 0.05;
-    oscillator.frequency.value = 2000;
+	gainNode.gain.value = 0.1;
+    oscillator.frequency.value = freq;
     oscillator.type = 'sine';
 
-    oscillator.start();
-  
-    setTimeout(
-      function(){
-        oscillator.stop();
-      }, 
-      100
-    );  
+    oscillator.start(1);
+    oscillator.stop(1.50);
 }
+*/
+
+/*function listen() {
+	start_mic();
+	//listening = true;
+	updateFrequency();
+}
+*/
 
 
-function updatePitch( time ) {
+/*function ping_send() {
+
+	start_mic();   //turn on mic
+	listening = true;
+
+	beep(3000);  //send ping
+	t1 = performance.now();   //start timer
+	updateFrequency(3000);  //start listening
+	t2 = perfomance.now();   //stop timer 
+
+	reset();
+	
+	distance = 0.343 * (t2-t1); 
+	console.log(distance + " meters");   //print results
+
+}
+*/
+
+/*function ping_return() {
+	toggleLiveInput();   //turn on mic
+	listening = true;
+	while (listening){
+		console.log(pitch);
+		if (pitch > 3000 && pitch < 3500){ 
+			reset();
+			beep(4000);
+			listening = false;
+			console.log("ping returned!");
+			break;
+		}
+	}
+}*/
+
+
+function updateFrequency(time) {
+
 	var cycles = new Array;
 	analyser.getFloatTimeDomainData( buf );
 	var ac = autoCorrelate( buf, audioContext.sampleRate );
 
- 	if (ac == -1) {
-		 pitchElem.innerText = "--";
-		 console.log("--");
- 	} else {
-	 	detectorElem.className = "confident";
-		pitch = ac;
-		console.log(pitch);
-		pitchElem.innerText = Math.round( pitch );
-		if (pitch > 3000 && pitch <4000){
-			beep();
-		}
+	if (ac == -1) {
+		frequency = 0;
+	} else {
+		frequency = ac;
 	}
-	
 
-	if (!window.requestAnimationFrame)
-		window.requestAnimationFrame = window.webkitRequestAnimationFrame;
-	rafID = window.requestAnimationFrame( updatePitch );
+	console.log(frequency);
+
+/*	if (frequency > 3000 && frequency < 3500){
+		listening = false;
+		break;
+	}
+	*/
+
+
+	rafID = window.requestAnimationFrame(updateFrequency);
+	
 }
