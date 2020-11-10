@@ -190,15 +190,15 @@ function listen() {
 
 function ping_send() {
 	pReturn = false;
-	target = 2000;
-	beep(3000);  //send ping
+	target = 10000;
+	beep(9000);  //send ping
 	start_mic();   //turn on mic
 }
 
 
 function ping_return() {
 	pReturn = true;
-	target = 2000;
+	target = 9000;
 	start_mic();   //turn on mic
 }
 
@@ -225,7 +225,7 @@ function updateFrequency(time) {
 	}
 
 	if (frequency > target && frequency < (target + 500) && pReturn == true){
-		beep(3000);
+		beep(10000);
 		console.log("returned!");
 		t2 = performance.now();   //stop timer 
 		reset();
