@@ -181,7 +181,7 @@ function beep(freq) {
 
 function listen() {
 	pReturn = false;
-	target = 2000;
+	target = null;
 	listening = true;
 	start_mic();
 }
