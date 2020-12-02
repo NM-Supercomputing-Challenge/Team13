@@ -26,9 +26,11 @@ export default class WaterModel extends Model {
     }
 
     step() {
-        if (this.ticks % this.drip === 0) this.createWave(this.patches.oneOf())
+        if (this.ticks === 0) this.createWave(this.patches.patchRectXY(0, 0, 3, 3)) //specific patch?
         this.patches.ask(p => this.computeDeltaZ(p))
         this.patches.ask(p => this.updateZ(p))
+        if (this.patches.patchRectXY(200, 200, 3, 3).zpos != 0) this.createWave(this.patches.patchRectXY(200, 200, 3, 3)) //var as some distance awayt
+
     }
 
     createWave(p) {
