@@ -10,7 +10,7 @@ var pitch;
 var	target;
 var listening = false;
 var pReturn;
-const DELAY;
+//const DELAY;
 
 
 window.onload = function() {
@@ -217,7 +217,7 @@ function updateFrequency(time) {
 
 	if (frequency > target && frequency < (target + 500) && pReturn == false){    //if frequency condition is met...
 		t2 = performance.now();   //take second time mesurment
-		distance = 0.1715 * ((t2-t1) - DELAY);    //calculate distance
+		distance = 0.1715 * ((t2-t1));    //calculate distance
 		console.log(distance + " meters");   //print results
 		reset();
 	}
