@@ -10,6 +10,7 @@ var pitch;
 var	target;
 var listening = false;
 var pReturn;
+const DELAY;
 
 
 window.onload = function() {
@@ -165,7 +166,7 @@ function beep(freq) {
 	oscillator.connect(gainNode);
 	
     gainNode.connect(audioContext.destination);
-	gainNode.gain.value = 0.3;
+	gainNode.gain.value = 0.1;
     oscillator.frequency.value = freq;
     oscillator.type = 'sine';
 
@@ -186,20 +187,17 @@ function listen() {
 	start_mic();
 }
 
-
-
 function ping_send() {
 	pReturn = false;
-	target = 10000;
-	beep(9000);  //send ping
-	start_mic();   //turn on mic
+	target = 2000;   //specify target frequecy of expected return ping
+	beep(3000);      //send ping at 3000hz
+	start_mic();     //turn on mic and start listening for the return ping
 }
 
-
 function ping_return() {
-	pReturn = true;
-	target = 9000;
-	start_mic();   //turn on mic
+	pReturn = true;  
+	target = 2000;   //specify target frequecy of expected ping
+	start_mic();     //turn on mic and start listening for the ping
 }
 
 
@@ -217,19 +215,17 @@ function updateFrequency(time) {
 
 	console.log(frequency);
 
-	if (frequency > target && frequency < (target + 500) && pReturn == false){
-		t2 = performance.now();   //stop timer 
-		distance = 0.343 * (t2-t1); 
+	if (frequency > target && frequency < (target + 500) && pReturn == false){    //if frequency condition is met...
+		t2 = performance.now();   //take second time mesurment
+		distance = 0.1715 * ((t2-t1) - DELAY);    //calculate distance
 		console.log(distance + " meters");   //print results
 		reset();
 	}
 
-	if (frequency > target && frequency < (target + 500) && pReturn == true){
-		beep(10000);
+	if (frequency > target && frequency < (target + 500) && pReturn == true){     //if frequency condition is met...
+		beep(3000);     //send return ping
 		console.log("returned!");
-		t2 = performance.now();   //stop timer 
 		reset();
-		
 	}
 
 
