@@ -1,14 +1,16 @@
 import World from '../src/World.js'
 import Model from '../src/Model.js'
+import util from '../src/util.js'
 
 // Derived from Cody's water model.
 export default class WaterModel extends Model {
     static defaultOptions() {
         return {
-            strength: 100,
+            strength: 20,
             surfaceTension: 56,
             friction: 0.99,
             drip: 50,
+            distance: 20,
         }
     }
 
@@ -19,16 +21,42 @@ export default class WaterModel extends Model {
         Object.assign(this, WaterModel.defaultOptions())
     }
     setup() {
+        //setup patches
         this.patches.ask(p => {
             p.zpos = 0
             p.deltaZ = 0
+            p.recieved = 0
+        })
+
+        //setup emitter
+        this.turtles.create(1, t => {
+            t.setxy(0, 0)
+        })
+
+        let xcor = util.randomFloat2(-1.0,1.0) * this.distance
+        let ycor = Math.sqrt(Math.pow(this.distance,2) - Math.pow(xcor,2))
+        //setup receiver
+        this.turtles.create(1, t => {
+            t.setxy(xcor, ycor)
         })
     }
+    
 
     step() {
-        if (this.ticks % this.drip === 0) this.createWave(this.patches.oneOf())
+    //send initial signal
+        if (this.ticks === 0) this.patches.patchRectXY(0, 0, 0, 0).ask(p => {
+            p.zpos = this.strength
+        })
+        
+    //check for response and send response signal
+        if (this.patches.patchRectXY(xcor, ycor, 3, 3).zpos > 0) this.patches.patchRectXY(xcor, ycor, 3, 3).ask(p => {
+            p.zpos = this.strength
+        })
+
+        console.log(this.patches.patchRectXY(xcor, ycor, 3, 3).zpos)
         this.patches.ask(p => this.computeDeltaZ(p))
         this.patches.ask(p => this.updateZ(p))
+        
     }
 
     createWave(p) {
