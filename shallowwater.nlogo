@@ -9,6 +9,8 @@ to setup
     ask patch 0 0 [sprout 1 [set shape "circle" set color orange set label precision zpos 1]]
   reset-ticks
   clear-all-plots
+  ; set data py:runresult "range(0,10)"
+  load-file
 end
 
 to create-wave
@@ -21,7 +23,10 @@ end
 
 to go
   set time ticks
-  ask patch 0 0 [ set zpos strength * item time data]
+  show time
+  show data
+  if ticks < length data [
+    ask patch 0 0 [ set zpos strength * item time data]]
   ask patches [compute-delta-z]
   ask patches [update-z]
   color-patches
@@ -47,8 +52,10 @@ end
 to load-file
   py:setup py:python
   py:run "import soundfile as sf"
-  py:run "data, fs = sf.read('/Users/MLD/Desktop/Songs/down.wav')"
-  set data py:runresult "data[1:44100]"
+  py:run "data, fs = sf.read('/home/madelyn/Downloads/MurrayRiff.wav')"
+  ;;set data py:runresult "data[1:44100]"
+  set data py:runresult "data[1:10]"
+  set data map [i -> mean i] data
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -153,7 +160,7 @@ surface-tension
 surface-tension
 0
 100
-50.0
+69.0
 1
 1
 NIL
@@ -168,7 +175,7 @@ friction
 friction
 0
 1
-1.0
+0.97
 .01
 1
 NIL
@@ -568,7 +575,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.1.1
+NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

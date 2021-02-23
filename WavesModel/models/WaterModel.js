@@ -25,7 +25,6 @@ export default class WaterModel extends Model {
         this.patches.ask(p => {
             p.zpos = 0
             p.deltaZ = 0
-            p.recieved = 0
         })
 
         //setup emitter
@@ -49,7 +48,7 @@ export default class WaterModel extends Model {
         })
         
     //check for response and send response signal
-        if (this.patches.patchRectXY(xcor, ycor, 3, 3).zpos > 0) this.patches.patchRectXY(xcor, ycor, 3, 3).ask(p => {
+        if (this.patches.patchRectXY(xpos, ypos, 3, 3).zpos > 0) this.patches.patchRectXY(xpos, ypos, 3, 3).ask(p => {
             p.zpos = this.strength
         })
 
