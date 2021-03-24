@@ -1,6 +1,6 @@
 extensions [py]
 
-globals [last-mouse k waterPatches audioTrack]
+globals [last-mouse k waterPatches audioTrack rec]
 patches-own [zpos delta-z obstacle? freeNeighbors]
 
 breed [speakers speaker]
@@ -25,6 +25,8 @@ to setup
   reset-ticks
   clear-all-plots
 
+
+
 end
 
 
@@ -33,8 +35,13 @@ to go
   ask patches [compute-delta-z]
 
   ask patches [update-z]
-  ask speakers [set frequency frequency1 set amplitude amplitude1 set phase phase1  oscillate]
+  ;ask speakers [set frequency frequency1 set amplitude amplitude1 set phase phase1  oscillate]
   color-patches
+
+  ask speakers [set zpos volume * item ticks audioTrack]
+
+  if record? = true [record]
+
 
   tick
 end
@@ -65,16 +72,31 @@ end
 to load-file
   py:setup py:python
   py:run "import soundfile as sf"
-  py:run "data, samplerate = sf.read('audio/4str.wav')"
-  set audioTrack py:runresult "data"
+  py:run "data, samplerate = sf.read('/home/madelyn/SCC2020/Team13/22050Hz.wav')"
+  ;; py:run "data, samplerate = sf.read('audio/4str.wav')"
+  set audioTrack py:runresult "data[20000:22000]"
   set-current-plot "Audio Track"
   clear-plot
+  show length audioTrack
   foreach audioTrack plot
 end
 
 to playSound
   py:run "from playsound import playsound"
-  py:run (word "playsound('" file-name "')")
+  py:run ("playsound('file-name')")
+end
+
+to record
+  if rec = 0 [set rec []]
+  set rec lput [zpos] of one-of speakers rec
+end
+
+to saverecord
+  py:run "import soundfile as sf"
+  py:set "soundlist" rec
+  py:run "sf.write('temprecording.wav', soundlist, 44100)"
+  set rec 0
+  set record? false
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -147,7 +169,7 @@ surface-tension
 surface-tension
 0
 100
-68.0
+99.0
 1
 1
 NIL
@@ -162,7 +184,7 @@ sustain
 sustain
 .95
 1
-0.994
+0.99
 .001
 1
 NIL
@@ -243,7 +265,7 @@ phase1
 phase1
 0
 360
-0.0
+19.0
 1
 1
 NIL
@@ -337,6 +359,60 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+15
+260
+187
+293
+volume
+volume
+1
+10000
+10000.0
+1
+1
+NIL
+HORIZONTAL
+
+SWITCH
+745
+345
+852
+378
+record?
+record?
+1
+1
+-1000
+
+BUTTON
+875
+370
+987
+403
+stop record
+saverecord
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+1040
+385
+1157
+430
+recording length
+if rec is-list? [length rec]
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -680,7 +756,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.1.1
+NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
