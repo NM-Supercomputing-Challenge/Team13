@@ -189,9 +189,6 @@ function listen() {
 
 function ping_send() {
 	pReturn = false;
-	target = 10000;
-	beep(9000);  //send ping
-	start_mic();   //turn on mic
 	target = 2000;   //specify target frequecy of expected return ping
 	beep(3000);      //send ping at 3000hz
 	start_mic();     //turn on mic and start listening for the return ping
@@ -199,9 +196,6 @@ function ping_send() {
 
 function ping_return() {
 	pReturn = true;
-	target = 9000;
-	start_mic();   //turn on mic
-	pReturn = true;  
 	target = 2000;   //specify target frequecy of expected ping
 	start_mic();     //turn on mic and start listening for the ping
 }
@@ -228,21 +222,10 @@ function updateFrequency(time) {
 		reset();
 	}
 
-	if (frequency > target && frequency < (target + 500) && pReturn == true){
-		beep(10000);
 	if (frequency > target && frequency < (target + 500) && pReturn == true){     //if frequency condition is met...
 		beep(3000);     //send return ping
 		console.log("returned!");
 		reset();
 	}
-
-
-	
 	rafID = window.requestAnimationFrame(updateFrequency);
-	
-	
 }
-
-
-
-    
