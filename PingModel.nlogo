@@ -18,7 +18,7 @@ to setup
   ;ask patches with [pxcor < -1 and abs pycor = 3][set obstacle? true]
   ask patches [set freeNeighbors neighbors4 with [ obstacle? != true]]
 
-  ask patch 0 -25 [sprout-microphones 1 [set shape "square 2" set size 4  set color green
+  ask patch 0 0 [sprout-microphones 1 [set shape "square 2" set size 4  set color green
     set label "2"
     set mlist [0]
   ]]
@@ -41,14 +41,14 @@ to go
   ask patches [update-z]
   ask speakers [set slist lput zpos slist]
   ask microphones [listen]
-  if ticks = (2 * cutoff) [print ticks stop]
+  if ticks = (1 * cutoff) [print ticks stop]
   ;if ticks = 800 [print ticks stop]
 
 
 
   if mouse-down? [ask one-of speakers [setxy mouse-xcor mouse-ycor]]
 
-  if ticks < 1 [ask speakers [set zpos 1000]]
+  if ticks < 1 [ask speakers [set zpos 10]]
 
 
 
@@ -214,8 +214,8 @@ surface-tension
 surface-tension
 0
 100
-98.38
-0.01
+50.0
+0.1
 1
 NIL
 HORIZONTAL
@@ -235,29 +235,11 @@ sustain
 NIL
 HORIZONTAL
 
-PLOT
-1105
-330
-1467
-641
-Microphone Recording
-NIL
-NIL
-0.0
-10.0
--2.0
-2.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "if ticks > 1 [ask one-of microphones [plot zpos]]"
-
 BUTTON
-980
-330
-1104
-363
+765
+350
+889
+383
 clear plot
 clear-all-plots
 NIL
@@ -271,10 +253,10 @@ NIL
 1
 
 BUTTON
-985
-370
-1092
-403
+765
+390
+872
+423
 flatten waves
 ask patches [set delta-z 0 set zpos 0]
 NIL
@@ -313,18 +295,18 @@ dis
 dis
 20
 40
-25.0
+20.0
 1
 1
 NIL
 HORIZONTAL
 
 PLOT
-1105
-15
-1465
-330
-plot 1
+765
+25
+1125
+340
+Amplitude
 NIL
 NIL
 0.0
@@ -332,10 +314,11 @@ NIL
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "ask one-of speakers [plot zpos]"
+"Phone 1" 1.0 0 -14439633 true "" "ask one-of speakers [plot zpos]"
+"Phone 2" 1.0 0 -5298144 true "" "ask one-of microphones [plot zpos]"
 
 @#$#@#$#@
 ## WHAT IS IT?

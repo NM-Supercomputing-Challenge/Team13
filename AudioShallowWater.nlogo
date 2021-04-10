@@ -72,9 +72,9 @@ end
 to load-file
   py:setup py:python
   py:run "import soundfile as sf"
-  py:run "data, samplerate = sf.read('/home/madelyn/SCC2020/Team13/22050Hz.wav')"
+  py:run "data, samplerate = sf.read('E:/Documents/GitHub/Team13/22050Hz.wav')"
   ;; py:run "data, samplerate = sf.read('audio/4str.wav')"
-  set audioTrack py:runresult "data[20000:22000]"
+  set audioTrack py:runresult "data[100:200]"
   set-current-plot "Audio Track"
   clear-plot
   show length audioTrack
@@ -94,7 +94,7 @@ end
 to saverecord
   py:run "import soundfile as sf"
   py:set "soundlist" rec
-  py:run "sf.write('temprecording.wav', soundlist, 44100)"
+  py:run "sf.write('testout.wav', soundlist, 8000)"
   set rec 0
   set record? false
 end
@@ -323,7 +323,7 @@ CHOOSER
 590
 file-name
 file-name
-"C:/Users/steph/Google Drive/Netlogo Sketches/audio/4str.wav"
+"E:/Documents/GitHub/Team13/testin.wav"
 0
 
 BUTTON
@@ -404,10 +404,10 @@ NIL
 1
 
 MONITOR
-1040
-385
-1157
-430
+990
+370
+1107
+415
 recording length
 if rec is-list? [length rec]
 17

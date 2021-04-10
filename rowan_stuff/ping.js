@@ -40,7 +40,7 @@ function gotStream(stream) {
 
     // Connect it to the destination.
     analyser = audioContext.createAnalyser();
-    analyser.fftSize = 4096;
+    analyser.fftSize = 64;
 	mediaStreamSource.connect( analyser );
 	t1 = performance.now();   //start timer
 	updateFrequency();
@@ -180,7 +180,7 @@ function beep(freq) {
 }
 
 
-function listen() {
+function listen() {  //initalize the mic to listen for frequencies
 	pReturn = false;
 	target = null;
 	listening = true;
@@ -217,7 +217,7 @@ function updateFrequency(time) {
 
 	if (frequency > target && frequency < (target + 500) && pReturn == false){    //if frequency condition is met...
 		t2 = performance.now();   //take second time mesurment
-		distance = 0.1715 * ((t2-t1));    //calculate distance
+		distance = 0.343 * ((t2-t1) / 2);    //calculate distance
 		console.log(distance + " meters");   //print results
 		reset();
 	}
