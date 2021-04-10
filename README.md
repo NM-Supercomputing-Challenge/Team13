@@ -1,0 +1,6 @@
+# Sin(Language)
+
+In this project, we are looking specifically at acoustic sound waves as we explore three questions: What is the nature of sound waves? How are they modeled? And, what are the applications of such a model in the real world? 
+We began by delving into the mechanics of modeling sound waves, first by looking at the equations used to model them and then by experimenting with how to implement these equations in NetLogo. Once we developed a computational model that gave us a good visualization of how sound waves behave, we branched out and explored two separate applications of our model in the real world.  
+The first application was focused on creating a Sonic Proximity System that could calculate the relative distance between any two smartphones using ultrasonic chirps.  The logic and feasibility behind this system was analyzed in the NetLogo model while a real version of the system was developed in JavaScript.
+The second application was focused on Spatial Audio Rendering.  In this application, we used the netlogo model as a tool to transform a raw sound input into an output that incorporates the effects (such as reverberation, echo, and distortion) that a certain space has on a sound.
