@@ -1,5 +1,7 @@
-extensions [py time]
+extensions [py time]   ;;import the python extension
 
+
+;;set up variables
 globals [last-mouse k waterPatches audioTrack rec temp]
 patches-own [zpos delta-z obstacle? freeNeighbors]
 
@@ -12,17 +14,17 @@ breed [microphones microphone]
 to setup
   cp ct set rec 0
   ask patches [set zpos 0 set delta-z 0 set obstacle? false]
-  ;ask patches with [abs(pxcor) > 10 or abs(pycor) > 10][set obstacle? true]
+  ;ask patches with [abs(pxcor) > 10 or abs(pycor) > 10][set obstacle? true]  ;; set up obsticals
 
   ask patches [set freeNeighbors neighbors4 with [ obstacle? != true]]
 
   ask patch 0 20 [sprout-microphones 1 [set shape "circle"
     set size 4 set color red
     set label precision zpos 1
-  ]]
+  ]] ;; create microphone turtle
 
   color-patches
-  create-speakers 1 [setxy 0 -20 set shape "square 2" set size 4  set color green]
+  create-speakers 1 [setxy 0 -20 set shape "square 2" set size 4  set color green] ;; create a speaker turtle
   reset-ticks
   set-current-plot "Microphone Recording"
   clear-plot
@@ -32,81 +34,77 @@ end
 
 to go
 
-  ask patches [compute-delta-z]
+  ask patches [compute-delta-z]  ;;calculate the change in height using shallow water eqation
 
-  ask patches [update-z]
-  if puretone = 1 [ask speakers [set frequency frequency1 set amplitude amplitude1 set phase phase1  oscillate]]
-  color-patches
+  ask patches [update-z]  ;;update the zpos using the delta-z previosly calcuated
+  if puretone = 1 [ask speakers [set frequency frequency1 set amplitude amplitude1 set phase phase1 oscillate]] ;; generate a pure tone (computer generated and not from a recording)
+  color-patches  ;;color patches based on amplitude
 
   if record? = true and length AudioTrack > 0 [
     ifelse ticks < length audioTrack
       [record]
-      [saveRecord stop]  ; Stop the Sim if we're at end of Audiotrack
+      [saveRecord stop]  ; Stop the simulation and save the recording if we're at end of the imported Audiotrack
   ]
 
-  if puretone = 0 [ask speakers [set zpos volume * item ticks audioTrack]]
+  if puretone = 0 [ask speakers [set zpos volume * item ticks audioTrack]]   ;;every tick, set the speaker amplitude to the next item in the .wav file but only if we are playing the file
   tick
 end
 
 to color-patches
   let max-water volume
   ask patches [
-    ;set pcolor scale-color blue zpos (-0.005 * max-water) (max-water * 0.005)
-    set pcolor scale-color blue zpos (-0.05 * max-water) (max-water * 0.05)
-    if obstacle? = true [set pcolor blue - 3]]
+    set pcolor scale-color blue zpos (-0.05 * max-water) (max-water * 0.05) ;; color corresponds to height of wave
+    if obstacle? = true [set pcolor blue - 3]] ;;obstacles are an even darker color
 
   ask microphones [set label precision zpos 1]
 end
 
 to compute-delta-z    ;Turtle procedure
-  set k (1 - (.01 * surface-tension))        ;k determines the degree to which neighbor-turtles'
-  set delta-z (delta-z + (k * ((sum [zpos] of freeNeighbors) - ((count freeNeighbors) * zpos))))
+  set k (1 - (.01 * surface-tension))
+  set delta-z (delta-z + (k * ((sum [zpos] of freeNeighbors) - ((count freeNeighbors) * zpos))))  ;;compute the chage in z using shallow water eqation. Also add in surface tension variable
 end
 
 to update-z
-   set zpos ((zpos + delta-z)  * sustain)
+   set zpos ((zpos + delta-z)  * sustain) ;; increase the zpos depending on the delta-z previosly calculated.  Also add in sustain variable.
 end
 
 to oscillate
-
-  ask speakers [set zpos (amplitude * sin ((ticks + phase) * frequency * 2 * pi))]
+  ask speakers [set zpos (amplitude * sin ((ticks + phase) * frequency * 2 * pi))] ;;if playing a pure tone, set speaker z position using sin function.
 end
 
 to load-file
-  py:setup py:python
+  py:setup py:python ;; set up python extension
   py:run "import soundfile as sf"
-  py:run (word "data, samplerate = sf.read('" file-name "')")
-  ;; py:run "data, samplerate = sf.read('audio/4str.wav')"
+  py:run (word "data, samplerate = sf.read('" file-name "')") ;; read audio file into list
 
 
- ; set audioTrack py:runresult "data[:10000]"
-   set audioTrack py:runresult "data"
-  ;if stereo, combine the tracks as the mean value
+  set audioTrack py:runresult "data"
+  ;if stereo, combine the tracks as the mean value      ;;only use these next few lines if working with a stereo input.
   ;if length item 0 audiotrack = 2 [ set audiotrack map [i -> mean i] audiotrack]
   set-current-plot "Audio Track"
   clear-plot
-  foreach audioTrack plot
+  foreach audioTrack plot ;;plot the input audio track as a wavefrom
 end
 
 to playSound
   py:run "from playsound import playsound"
-  py:run ("playsound('file-name')")
+  py:run ("playsound('file-name')") ;; use python extension to play a file from computer
 end
 
 to record
-  if rec = 0 [set rec []]
-  set rec lput [zpos] of one-of microphones rec
+  if rec = 0 [set rec []] ;;if current recording not complete
+  set rec lput [zpos] of one-of microphones rec ;; save the zpositions of microphone (a recording of the space)
 end
 
 to saverecord
   let normRec normalize rec
 
-  py:run "import soundfile as sf"
+  py:run "import soundfile as sf" ;; use python extension and soundfile library to save a recording file
   py:set "soundlist" normRec
   ; include parameters in output filename
   py:set "outFileName" (word  "violin-" surface-tension "-" sustain ".wav")
-  py:run "sf.write(outFileName, soundlist, 8000)"
-  set rec 0
+  py:run "sf.write(outFileName, soundlist, 8000)" ;; output normalized recording into a python file
+  set rec 0 ;; reset rec variable to be able to record again
   ;set record? false
 end
 
@@ -205,7 +203,7 @@ sustain
 sustain
 .55
 1
-0.9
+0.991
 .001
 1
 NIL
@@ -255,7 +253,7 @@ frequency1
 frequency1
 0
 10
-0.0
+10.0
 .01
 1
 NIL
@@ -270,7 +268,7 @@ amplitude1
 amplitude1
 0
 100
-0.0
+100.0
 1
 1
 NIL
@@ -392,7 +390,7 @@ SWITCH
 413
 record?
 record?
-0
+1
 1
 -1000
 
