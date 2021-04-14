@@ -2,11 +2,11 @@ extensions [py time]   ;;import the python extension
 
 
 ;;set up variables
-globals [last-mouse k waterPatches audioTrack rec temp]
+globals [last-mouse k waterPatches audioTrack rec temp curtrack  tracklength bit n]
 patches-own [zpos delta-z obstacle? freeNeighbors]
 
 breed [speakers speaker]
-speakers-own [frequency phase amplitude]
+speakers-own [frequency phase amplitude tracknum]
 
 breed [microphones microphone]
 
@@ -15,16 +15,18 @@ to setup
   cp ct set rec 0
   ask patches [set zpos 0 set delta-z 0 set obstacle? false]
   ;ask patches with [abs(pxcor) > 10 or abs(pycor) > 10][set obstacle? true]  ;; set up obsticals
+  ;ask patches with [pxcor = 0][set obstacle? true]
 
   ask patches [set freeNeighbors neighbors4 with [ obstacle? != true]]
 
-  ask patch 0 20 [sprout-microphones 1 [set shape "circle"
+  ask patch 0 0 [sprout-microphones 2 [set shape "circle"
     set size 4 set color red
-    set label precision zpos 1
-  ]] ;; create microphone turtle
+    set label precision zpos 1]] ;; create microphone turtle
+  ask microphone 0 [setxy -1 0]
+  ask microphone 1 [setxy 1 0]
+
 
   color-patches
-  create-speakers 1 [setxy 0 -20 set shape "square 2" set size 4  set color green] ;; create a speaker turtle
   reset-ticks
   set-current-plot "Microphone Recording"
   clear-plot
@@ -40,13 +42,21 @@ to go
   if puretone = 1 [ask speakers [set frequency frequency1 set amplitude amplitude1 set phase phase1 oscillate]] ;; generate a pure tone (computer generated and not from a recording)
   color-patches  ;;color patches based on amplitude
 
-  if record? = true and length AudioTrack > 0 [
-    ifelse ticks < length audioTrack
+  if record? = true and max tracklength > 0 [
+    ifelse ticks < max tracklength
       [record]
       [saveRecord stop]  ; Stop the simulation and save the recording if we're at end of the imported Audiotrack
   ]
 
-  if puretone = 0 [ask speakers [set zpos volume * item ticks audioTrack]]   ;;every tick, set the speaker amplitude to the next item in the .wav file but only if we are playing the file
+  if puretone = 0 [
+    ask speakers [if ticks < item tracknum tracklength [set zpos volume * item ticks item tracknum audioTrack]]
+
+    ask speakers [if ticks >= item tracknum tracklength [set zpos 0]]]
+
+
+
+
+       ;;every tick, set the speaker amplitude to the next item in the .wav file but only if we are playing the file
   tick
 end
 
@@ -78,12 +88,31 @@ to load-file
   py:run (word "data, samplerate = sf.read('" file-name "')") ;; read audio file into list
 
 
-  set audioTrack py:runresult "data"
+  set audioTrack replace-item track audioTrack py:runresult "data"
   ;if stereo, combine the tracks as the mean value      ;;only use these next few lines if working with a stereo input.
-  ;if length item 0 audiotrack = 2 [ set audiotrack map [i -> mean i] audiotrack]
+  ;if length item 0 item track audiotrack = 2 [
+    ;let temptrack map [i -> (mean item i item track audioTrack)]range length item track audioTrack
+    ;set audioTrack replace-item track audioTrack temptrack]
+  plot_track
+
+  ask patch 0 -10 [sprout-speakers 1 [set shape "square 2" set size 4  set color green set tracknum track]]
+  set tracklength map [i -> (length item i audioTrack)] [0 1 2 3 4]
+
+
+
+end
+
+to plot_track
   set-current-plot "Audio Track"
   clear-plot
-  foreach audioTrack plot ;;plot the input audio track as a wavefrom
+  set curtrack item track audioTrack
+  foreach curtrack plot
+end
+
+to cleartrack
+  set audioTrack [[][][][][]]
+  plot_track
+  set track 0
 end
 
 to playSound
@@ -93,7 +122,10 @@ end
 
 to record
   if rec = 0 [set rec []] ;;if current recording not complete
-  set rec lput [zpos] of one-of microphones rec ;; save the zpositions of microphone (a recording of the space)
+  set bit []
+  ask microphone 0 [set bit lput zpos bit]
+  ask microphone 1 [set bit lput zpos bit]
+  set rec lput bit rec ;; save the zpositions of microphone (a recording of the space)
 end
 
 to saverecord
@@ -102,19 +134,19 @@ to saverecord
   py:run "import soundfile as sf" ;; use python extension and soundfile library to save a recording file
   py:set "soundlist" normRec
   ; include parameters in output filename
-  py:set "outFileName" (word  "violin-" surface-tension "-" sustain ".wav")
-  py:run "sf.write(outFileName, soundlist, 8000)" ;; output normalized recording into a python file
+  py:set "outFileName" (word file-name "-" surface-tension "-" sustain ".wav")
+  py:run "sf.write(outFileName, soundlist, 16000)" ;; output normalized recording into a python file
   set rec 0 ;; reset rec variable to be able to record again
   ;set record? false
 end
 
 to-report normalize [aList]
   ; normalize the volume with a max of either +1 or -1
-  let theMax max map [i -> abs i] aList
+  let theMax max map [j -> ( max map [i -> (abs (item i item j rec))][0 1])]range length rec
    ; if max = 0 set scale list by 1 which returns same list
    ; otherwise scale it up or down
   let scale ifelse-value theMax = 0 [1] [1 / theMax]
-  report map [i -> i * scale] aList
+  report map [j -> (map [i -> ((item i item j rec) * scale)][0 1])] range length rec
 
 end
 @#$#@#$#@
@@ -203,7 +235,7 @@ sustain
 sustain
 .55
 1
-0.991
+0.99
 .001
 1
 NIL
@@ -222,10 +254,11 @@ NIL
 -2.0
 2.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot [zpos] of one-of microphones"
+"left" 1.0 0 -3844592 true "" "plot [zpos] of microphone 0"
+"right" 1.0 0 -13345367 true "" "plot [zpos] of microphone 1"
 
 BUTTON
 980
@@ -290,10 +323,10 @@ NIL
 HORIZONTAL
 
 PLOT
-825
-425
-1110
-545
+750
+555
+1035
+675
 Audio Track
 NIL
 NIL
@@ -325,20 +358,20 @@ NIL
 1
 
 CHOOSER
-825
-545
-1110
-590
+750
+465
+1035
+510
 file-name
 file-name
-"Stephen8k.wav" "testin.wav" "22050Hz.wav" "violin.wav" "voicetest.wav"
+"1.wav" "2.wav" "3.wav" "4.wav" "violin.wav" "sin.wav" "voicetest.wav" "stereo.wav"
 3
 
 BUTTON
-750
-460
-825
-493
+1000
+515
+1075
+548
 play
 playSound
 NIL
@@ -390,7 +423,7 @@ SWITCH
 413
 record?
 record?
-1
+0
 1
 -1000
 
@@ -422,23 +455,6 @@ ifelse-value is-list? rec [length rec][0]
 1
 11
 
-BUTTON
-15
-325
-122
-358
-move-speaker
-  if mouse-down? [ask one-of speakers [setxy mouse-xcor mouse-ycor]]\n  display
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
 10
 370
@@ -453,6 +469,89 @@ puretone
 1
 NIL
 HORIZONTAL
+
+BUTTON
+750
+515
+882
+548
+Plot Currernt Track
+plot_track
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+885
+515
+997
+548
+Clear All Tracks
+cleartrack
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+860
+425
+1032
+458
+track
+track
+0
+4
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+45
+490
+127
+523
+move-mic
+  if mouse-down? [ask microphone 0 [setxy mouse-xcor - 1 mouse-ycor] ask microphone 1 [setxy mouse-xcor + 1 mouse-ycor]]\n  display
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+35
+430
+142
+463
+move-speaker
+  if mouse-down? [ask speaker (track + 2) [setxy mouse-xcor mouse-ycor]]\n  display
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
