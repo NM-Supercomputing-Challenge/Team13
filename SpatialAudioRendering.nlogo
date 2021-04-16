@@ -67,6 +67,7 @@ to color-patches
     if obstacle? = true [set pcolor blue - 3]] ;;obstacles are an even darker color
 
   ask microphones [set label precision zpos 1]
+  ask speakers [set label precision tracknum 1]
 end
 
 to compute-delta-z    ;Turtle procedure
@@ -97,6 +98,7 @@ to load-file
 
   ask patch 0 -10 [sprout-speakers 1 [set shape "square 2" set size 4  set color green set tracknum track]]
   set tracklength map [i -> (length item i audioTrack)] [0 1 2 3 4]
+  ask speakers [set label precision tracknum 1]
 
 
 
@@ -365,7 +367,7 @@ CHOOSER
 file-name
 file-name
 "1.wav" "2.wav" "3.wav" "4.wav" "violin.wav" "sin.wav" "voicetest.wav" "stereo.wav"
-3
+4
 
 BUTTON
 1000
