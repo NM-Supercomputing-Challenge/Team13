@@ -1,4 +1,4 @@
-extensions [py time]   ;;import the python extension
+extensions [py time vid]   ;;import the python extension
 
 
 ;;set up variables
@@ -21,15 +21,22 @@ to setup
 
   ask patch 0 0 [sprout-microphones 2 [set shape "circle"
     set size 4 set color red
-    set label precision zpos 1]] ;; create microphone turtle
+    ]] ;; create microphone turtle
   ask microphone 0 [setxy -1 0]
   ask microphone 1 [setxy 1 0]
+
+  ;set label precision zpos 1
+
+  vid:reset-recorder
+  vid:start-recorder
 
 
   color-patches
   reset-ticks
   set-current-plot "Microphone Recording"
   clear-plot
+
+  if puretone = 1 [ask patch 0 -10 [sprout-speakers 1 [set shape "square 2" set size 4  set color green]]]
 
 end
 
@@ -39,8 +46,16 @@ to go
   ask patches [compute-delta-z]  ;;calculate the change in height using shallow water eqation
 
   ask patches [update-z]  ;;update the zpos using the delta-z previosly calcuated
-  if puretone = 1 [ask speakers [set frequency frequency1 set amplitude amplitude1 set phase phase1 oscillate]] ;; generate a pure tone (computer generated and not from a recording)
+  if puretone = 1 [ask speakers [set frequency frequency1 set amplitude amplitude1 set phase phase1 oscillate]]  ;; generate a pure tone (computer generated and not from a recording)
   color-patches  ;;color patches based on amplitude
+
+  if video? = true and max tracklength > 0 and (ticks mod 640) = 0 [
+    ifelse ticks < max tracklength
+      [vid:record-view]
+      [vid:save-recording "out.mp4"
+  vid:reset-recorder]  ; Stop the simulation and save the recording if we're at end of the imported Audiotrack
+  ]
+
 
   if record? = true and max tracklength > 0 [
     ifelse ticks < max tracklength
@@ -53,10 +68,9 @@ to go
 
     ask speakers [if ticks >= item tracknum tracklength [set zpos 0]]]
 
-
-
-
        ;;every tick, set the speaker amplitude to the next item in the .wav file but only if we are playing the file
+
+
   tick
 end
 
@@ -66,7 +80,7 @@ to color-patches
     set pcolor scale-color blue zpos (-0.05 * max-water) (max-water * 0.05) ;; color corresponds to height of wave
     if obstacle? = true [set pcolor blue - 3]] ;;obstacles are an even darker color
 
-  ask microphones [set label precision zpos 1]
+  ;ask microphones [set label precision zpos 1]
   ask speakers [set label precision tracknum 1]
 end
 
@@ -138,6 +152,9 @@ to saverecord
   ; include parameters in output filename
   py:set "outFileName" (word file-name "-" surface-tension "-" sustain ".wav")
   py:run "sf.write(outFileName, soundlist, 16000)" ;; output normalized recording into a python file
+
+
+
   set rec 0 ;; reset rec variable to be able to record again
   ;set record? false
 end
@@ -155,8 +172,8 @@ end
 GRAPHICS-WINDOW
 190
 10
-703
-524
+1003
+474
 -1
 -1
 5.0
@@ -169,10 +186,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--50
-50
--50
-50
+-80
+80
+-45
+45
 1
 1
 1
@@ -237,17 +254,17 @@ sustain
 sustain
 .55
 1
-0.99
+0.985
 .001
 1
 NIL
 HORIZONTAL
 
 PLOT
-740
-19
-1102
-330
+1275
+10
+1675
+310
 Microphone Recording
 NIL
 NIL
@@ -262,33 +279,16 @@ PENS
 "left" 1.0 0 -3844592 true "" "plot [zpos] of microphone 0"
 "right" 1.0 0 -13345367 true "" "plot [zpos] of microphone 1"
 
-BUTTON
-980
-330
-1104
-363
-clear plot
-clear-all-plots
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
 10
-135
+220
 182
-168
+253
 frequency1
 frequency1
 0
 10
-10.0
+0.0
 .01
 1
 NIL
@@ -296,14 +296,14 @@ HORIZONTAL
 
 SLIDER
 10
-165
+250
 182
-198
+283
 amplitude1
 amplitude1
 0
 100
-100.0
+0.0
 1
 1
 NIL
@@ -311,9 +311,9 @@ HORIZONTAL
 
 SLIDER
 10
-195
+280
 182
-228
+313
 phase1
 phase1
 0
@@ -325,10 +325,10 @@ NIL
 HORIZONTAL
 
 PLOT
-750
-555
-1035
-675
+1275
+445
+1675
+565
 Audio Track
 NIL
 NIL
@@ -343,10 +343,10 @@ PENS
 "pen-0" 1.0 2 -14730904 true "" ""
 
 BUTTON
-750
-425
-825
-458
+1275
+315
+1380
+348
 NIL
 load-file
 NIL
@@ -360,37 +360,20 @@ NIL
 1
 
 CHOOSER
-750
-465
-1035
-510
+1275
+355
+1560
+400
 file-name
 file-name
-"1.wav" "2.wav" "3.wav" "4.wav" "violin.wav" "sin.wav" "voicetest.wav" "stereo.wav"
-4
+"lucia.wav" "manouk.wav" "2.wav" "3.wav" "violin.wav" "sin.wav" "voicetest.wav" "stereo.wav"
+0
 
 BUTTON
-1000
-515
-1075
-548
-play
-playSound
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-595
-540
-702
-573
+590
+530
+700
+563
 flatten waves
 ask patches [set delta-z 0 set zpos 0]
 NIL
@@ -404,10 +387,10 @@ NIL
 1
 
 SLIDER
-15
-260
-187
-293
+10
+120
+182
+153
 volume
 volume
 1
@@ -419,10 +402,10 @@ NIL
 HORIZONTAL
 
 SWITCH
-750
-380
-857
-413
+1565
+315
+1675
+348
 record?
 record?
 0
@@ -430,10 +413,10 @@ record?
 -1000
 
 BUTTON
-855
-380
-967
-413
+1565
+405
+1675
+438
 stop record
 saverecord
 NIL
@@ -447,10 +430,10 @@ NIL
 1
 
 MONITOR
-855
-335
-965
-380
+1565
+355
+1675
+400
 recording length
 ifelse-value is-list? rec [length rec][0]
 17
@@ -459,9 +442,9 @@ ifelse-value is-list? rec [length rec][0]
 
 SLIDER
 10
-370
+185
 182
-403
+218
 puretone
 puretone
 0
@@ -473,10 +456,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-750
-515
-882
-548
+1275
+405
+1440
+438
 Plot Currernt Track
 plot_track
 NIL
@@ -490,10 +473,10 @@ NIL
 1
 
 BUTTON
-885
-515
-997
-548
+1445
+405
+1560
+438
 Clear All Tracks
 cleartrack
 NIL
@@ -507,25 +490,25 @@ NIL
 1
 
 SLIDER
-860
-425
-1032
-458
+1385
+315
+1560
+348
 track
 track
 0
 4
-3.0
+0.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-45
-490
-127
-523
+395
+530
+477
+563
 move-mic
   if mouse-down? [ask microphone 0 [setxy mouse-xcor - 1 mouse-ycor] ask microphone 1 [setxy mouse-xcor + 1 mouse-ycor]]\n  display
 T
@@ -539,13 +522,41 @@ NIL
 1
 
 BUTTON
-35
-430
-142
-463
+480
+530
+587
+563
 move-speaker
   if mouse-down? [ask speaker (track + 2) [setxy mouse-xcor mouse-ycor]]\n  display
 T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SWITCH
+35
+365
+137
+398
+video?
+video?
+0
+1
+-1000
+
+BUTTON
+30
+415
+147
+448
+stop video
+vid:save-recording \"out.mp4\"\n  vid:reset-recorder stop
+NIL
 1
 T
 OBSERVER

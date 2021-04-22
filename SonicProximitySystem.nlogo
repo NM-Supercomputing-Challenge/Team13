@@ -1,13 +1,13 @@
 extensions [py]
 
-globals [last-mouse k waterPatches audioTrack micListening speakListening cutoff mlist lastzpos speakerlastzpos slist]
+globals [last-mouse k waterPatches audioTrack micListening speakListening cutoff mlist1 mlist2 lastzpos speakerlastzpos slist]
 patches-own [zpos delta-z obstacle? freeNeighbors]
 
 breed [speakers speaker]
 speakers-own []
 microphones-own[]
 
-breed [microphones microphone]
+breed [microphones microphone ]
 
 breed [phones phone]
 phones-own [frequency phase amplitude signal]
@@ -18,13 +18,16 @@ to setup
   ;ask patches with [pxcor < -1 and abs pycor = 3][set obstacle? true]
   ask patches [set freeNeighbors neighbors4 with [ obstacle? != true]]
 
-  ask patch 0 0 [sprout-microphones 1 [set shape "square 2" set size 4  set color green
+  ask patch 0 0 [sprout-microphones 2 [set shape "square 2" set size 4  set color green
     set label "2"
-    set mlist [0]
+    set mlist1 [0]
+    set mlist2 [0]
   ]]
+  ask microphone 0 [setxy 0 -20]
+  ask microphone 1 [setxy 0 -40]
 
   color-patches
-  create-speakers 1 [setxy 0 dis set shape "square 2" set size 4  set color green set slist [0] set label "1"]
+  create-speakers 1 [setxy 0 0 set shape "square 2" set size 4  set color green set slist [0] set label "1"]
   reset-ticks
   clear-all-plots
   set micListening true
@@ -41,14 +44,16 @@ to go
   ask patches [update-z]
   ask speakers [set slist lput zpos slist]
   ask microphones [listen]
-  if ticks = (1 * cutoff) [print ticks stop]
+  ;if ticks = (1 * cutoff) [print ticks stop]
   ;if ticks = 800 [print ticks stop]
+  ;if micListening = false [stop]
+  if ticks = (1 * cutoff) [stop]
 
 
 
   if mouse-down? [ask one-of speakers [setxy mouse-xcor mouse-ycor]]
 
-  if ticks < 1 [ask speakers [set zpos 10]]
+  if ticks < 1 [ask speakers [set zpos 100]]
 
 
 
@@ -83,13 +88,17 @@ to listen
 
 
 
-
-  ask microphones [if zpos > lastzpos and micListening = true [set mlist lput zpos mlist]]
-  ask microphones [if zpos < lastzpos and micListening = true [set micListening false
-    set zpos 1000
-    set cutoff ticks
+  ask microphone 0 [set mlist1 lput zpos mlist1]
+  ask microphone 1 [set mlist2 lput zpos mlist2]
+  ask microphone 1 [if zpos < lastzpos and micListening = true [set micListening false
+    set cutoff (ticks + 100)
     set speakListening true]]
-  ask microphones [set lastzpos zpos]
+  ask microphone 1 [set lastzpos zpos]
+
+  ;ask microphones [if zpos < lastzpos and micListening = true [set micListening false
+    ;set zpos 1000
+    ;set cutoff ticks
+    ;set speakListening true]]
 
 
 
@@ -140,7 +149,8 @@ end
 
 
 to-report mag
-  report max mlist
+  let x (abs (max mlist1 * 0.25 - max mlist2))
+  report x
 
 end
 @#$#@#$#@
@@ -214,7 +224,7 @@ surface-tension
 surface-tension
 0
 100
-50.0
+99.5
 0.1
 1
 NIL
@@ -222,14 +232,14 @@ HORIZONTAL
 
 SLIDER
 10
-75
+80
 182
-108
+113
 sustain
 sustain
-.95
+.6
 1
-0.991
+0.992
 .001
 1
 NIL
@@ -296,7 +306,7 @@ dis
 20
 40
 20.0
-1
+20
 1
 NIL
 HORIZONTAL
@@ -319,6 +329,25 @@ true
 PENS
 "Phone 1" 1.0 0 -14439633 true "" "ask one-of speakers [plot zpos]"
 "Phone 2" 1.0 0 -5298144 true "" "ask one-of microphones [plot zpos]"
+
+PLOT
+890
+395
+1210
+660
+plot 1
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "ask microphone 0 [plot zpos]"
+"pen-1" 1.0 0 -7500403 true "" "ask microphone 1 [plot zpos]"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -702,6 +731,30 @@ NetLogo 6.2.0
     <enumeratedValueSet variable="dis">
       <value value="20"/>
       <value value="40"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="SUS50" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>count turtles</metric>
+    <enumeratedValueSet variable="surface-tension">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sustain">
+      <value value="0.988"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dis">
+      <value value="40"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="test2" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>mag</metric>
+    <steppedValueSet variable="surface-tension" first="95" step="0.5" last="99.5"/>
+    <steppedValueSet variable="sustain" first="0.9" step="0.001" last="0.999"/>
+    <enumeratedValueSet variable="dis">
+      <value value="20"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
