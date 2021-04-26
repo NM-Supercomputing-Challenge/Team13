@@ -1,13 +1,11 @@
-extensions [py]
-
-globals [last-mouse k waterPatches audioTrack micListening speakListening cutoff mlist1 mlist2 lastzpos speakerlastzpos slist]
+globals [last-mouse k waterPatches audioTrack micListening speakListening cutoff mlist lastzpos speakerlastzpos slist t1 t2]
 patches-own [zpos delta-z obstacle? freeNeighbors]
 
 breed [speakers speaker]
 speakers-own []
 microphones-own[]
 
-breed [microphones microphone ]
+breed [microphones microphone]
 
 breed [phones phone]
 phones-own [frequency phase amplitude signal]
@@ -18,16 +16,13 @@ to setup
   ;ask patches with [pxcor < -1 and abs pycor = 3][set obstacle? true]
   ask patches [set freeNeighbors neighbors4 with [ obstacle? != true]]
 
-  ask patch 0 0 [sprout-microphones 2 [set shape "square 2" set size 4  set color green
+  ask patch 0 (-1 * dis) [sprout-microphones 1 [set shape "square 2" set size 4  set color green
     set label "2"
-    set mlist1 [0]
-    set mlist2 [0]
+    set mlist [0]
   ]]
-  ask microphone 0 [setxy 0 -20]
-  ask microphone 1 [setxy 0 -40]
 
   color-patches
-  create-speakers 1 [setxy 0 0 set shape "square 2" set size 4  set color green set slist [0] set label "1"]
+  create-speakers 1 [setxy 0 dis set shape "square 2" set size 4  set color green set slist [0] set label "1"]
   reset-ticks
   clear-all-plots
   set micListening true
@@ -44,16 +39,14 @@ to go
   ask patches [update-z]
   ask speakers [set slist lput zpos slist]
   ask microphones [listen]
-  ;if ticks = (1 * cutoff) [print ticks stop]
+  if ticks = (t1 + (2 * cutoff)) [print (word "Distance = " (t2 - t1) " units" ) stop]
   ;if ticks = 800 [print ticks stop]
-  ;if micListening = false [stop]
-  if ticks = (1 * cutoff) [stop]
 
 
 
   if mouse-down? [ask one-of speakers [setxy mouse-xcor mouse-ycor]]
 
-  if ticks < 1 [ask speakers [set zpos 100]]
+  ;if ticks < 1 [ask speakers [set zpos 1000]]
 
 
 
@@ -88,17 +81,10 @@ to listen
 
 
 
-  ask microphone 0 [set mlist1 lput zpos mlist1]
-  ask microphone 1 [set mlist2 lput zpos mlist2]
-  ask microphone 1 [if zpos < lastzpos and micListening = true [set micListening false
-    set cutoff (ticks + 100)
-    set speakListening true]]
-  ask microphone 1 [set lastzpos zpos]
 
-  ;ask microphones [if zpos < lastzpos and micListening = true [set micListening false
-    ;set zpos 1000
-    ;set cutoff ticks
-    ;set speakListening true]]
+  ask microphones [if zpos > lastzpos and micListening = true [set mlist lput zpos mlist]]
+  ask microphones [if zpos < lastzpos and micListening = true [return]]
+  ask microphones [set lastzpos zpos]
 
 
 
@@ -129,15 +115,16 @@ to listen
 end
 
 to ping
-  clear-all-plots
-  reset-ticks
   set micListening true
-  ask speakers [set zpos 100]
+  ask speakers [set zpos 1000]
+  set t1 ticks
 end
 
 to return
-  ask microphones [set zpos 100]
+  ask microphones [set zpos 1000]
   set micListening false
+  set t2 ticks
+  set cutoff (t2 - t1)
   set speakListening True
 end
 
@@ -149,16 +136,15 @@ end
 
 
 to-report mag
-  let x (abs (max mlist1 * 0.25 - max mlist2))
-  report x
+  report max mlist
 
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-235
-25
-748
-539
+195
+10
+708
+524
 -1
 -1
 5.0
@@ -224,7 +210,7 @@ surface-tension
 surface-tension
 0
 100
-99.5
+98.5
 0.1
 1
 NIL
@@ -239,17 +225,17 @@ sustain
 sustain
 .6
 1
-0.992
+0.991
 .001
 1
 NIL
 HORIZONTAL
 
 BUTTON
-765
-350
-889
-383
+710
+335
+834
+368
 clear plot
 clear-all-plots
 NIL
@@ -263,10 +249,10 @@ NIL
 1
 
 BUTTON
-765
-390
-872
-423
+710
+375
+817
+408
 flatten waves
 ask patches [set delta-z 0 set zpos 0]
 NIL
@@ -305,17 +291,17 @@ dis
 dis
 20
 40
-20.0
-20
+30.0
+5
 1
 NIL
 HORIZONTAL
 
 PLOT
-765
-25
-1125
-340
+710
+10
+1070
+325
 Amplitude
 NIL
 NIL
@@ -329,25 +315,6 @@ true
 PENS
 "Phone 1" 1.0 0 -14439633 true "" "ask one-of speakers [plot zpos]"
 "Phone 2" 1.0 0 -5298144 true "" "ask one-of microphones [plot zpos]"
-
-PLOT
-890
-395
-1210
-660
-plot 1
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "ask microphone 0 [plot zpos]"
-"pen-1" 1.0 0 -7500403 true "" "ask microphone 1 [plot zpos]"
 
 @#$#@#$#@
 ## WHAT IS IT?

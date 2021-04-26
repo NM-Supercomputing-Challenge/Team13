@@ -17,13 +17,14 @@ to setup
   ;ask patches with [abs(pxcor) > 10 or abs(pycor) > 10][set obstacle? true]  ;; set up obsticals
   ;ask patches with [pxcor = 0][set obstacle? true]
 
-  ask patches [set freeNeighbors neighbors4 with [ obstacle? != true]]
+
 
   ask patch 0 0 [sprout-microphones 2 [set shape "circle"
     set size 4 set color red
     ]] ;; create microphone turtle
-  ask microphone 0 [setxy -1 0]
-  ask microphone 1 [setxy 1 0]
+  ask microphone 0 [setxy -3 0]
+  ask microphone 1 [setxy 3 0]
+  ask patches with [abs(pycor) < 3 and pxcor = 0][set obstacle? true]
 
   ;set label precision zpos 1
 
@@ -35,7 +36,7 @@ to setup
   reset-ticks
   set-current-plot "Microphone Recording"
   clear-plot
-
+  ask patches [set freeNeighbors neighbors4 with [ obstacle? != true]]
   if puretone = 1 [ask patch 0 -10 [sprout-speakers 1 [set shape "square 2" set size 4  set color green]]]
 
 end
@@ -49,18 +50,13 @@ to go
   if puretone = 1 [ask speakers [set frequency frequency1 set amplitude amplitude1 set phase phase1 oscillate]]  ;; generate a pure tone (computer generated and not from a recording)
   color-patches  ;;color patches based on amplitude
 
-  if video? = true and max tracklength > 0 and (ticks mod 640) = 0 [
-    ifelse ticks < max tracklength
-      [vid:record-view]
-      [vid:save-recording "out.mp4"
-  vid:reset-recorder]  ; Stop the simulation and save the recording if we're at end of the imported Audiotrack
-  ]
+  if video? = true and max tracklength > 0 and (ticks mod 640) = 0 [vid:record-view]
 
 
   if record? = true and max tracklength > 0 [
     ifelse ticks < max tracklength
       [record]
-      [saveRecord stop]  ; Stop the simulation and save the recording if we're at end of the imported Audiotrack
+      [saveRecord  stop]  ; Stop the simulation and save the recording if we're at end of the imported Audiotrack
   ]
 
   if puretone = 0 [
@@ -142,6 +138,7 @@ to record
   ask microphone 0 [set bit lput zpos bit]
   ask microphone 1 [set bit lput zpos bit]
   set rec lput bit rec ;; save the zpositions of microphone (a recording of the space)
+
 end
 
 to saverecord
@@ -152,7 +149,8 @@ to saverecord
   ; include parameters in output filename
   py:set "outFileName" (word file-name "-" surface-tension "-" sustain ".wav")
   py:run "sf.write(outFileName, soundlist, 16000)" ;; output normalized recording into a python file
-
+  vid:save-recording "out.mp4"
+  vid:reset-recorder
 
 
   set rec 0 ;; reset rec variable to be able to record again
@@ -498,7 +496,7 @@ track
 track
 0
 4
-0.0
+1.0
 1
 1
 NIL
@@ -510,7 +508,7 @@ BUTTON
 477
 563
 move-mic
-  if mouse-down? [ask microphone 0 [setxy mouse-xcor - 1 mouse-ycor] ask microphone 1 [setxy mouse-xcor + 1 mouse-ycor]]\n  display
+  if mouse-down? [ask microphone 0 [setxy mouse-xcor - 2 mouse-ycor] ask microphone 1 [setxy mouse-xcor + 2 mouse-ycor]]\n  display
 T
 1
 T
